@@ -119,27 +119,27 @@ type Query struct {
 	// icon
 	HasIcon struct {
 		On    bool
-		Value int
+		Value bool
 	}
 	// video
 	HasVideo struct {
 		On    bool
-		Value int
+		Value bool
 	}
 	// photoreport
 	HasPhotorep struct {
 		On    bool
-		Value int
+		Value bool
 	}
 	// news or article
 	IsNews struct {
 		On    bool
-		Value int
+		Value bool
 	}
 	// spiegel
 	IsSpiegel struct {
 		On    bool
-		Value int
+		Value bool
 	}
 	// project
 	Project struct {
@@ -169,12 +169,12 @@ type Query struct {
 	// IsMainProject
 	IsMainProject struct {
 		On    bool
-		Value int
+		Value bool
 	}
 	// IsMainColl
 	IsMainColl struct {
 		On    bool
-		Value int
+		Value bool
 	}
 	// Type
 	Type struct {
@@ -202,31 +202,31 @@ func (q *Query) String() string {
 		q.MustNotRangeIDLessThan.Value,
 		func() string {
 			if q.HasIcon.On {
-				return fmt.Sprintf(`,{"term":{"hasIcon":%d}}`, q.HasIcon.Value)
+				return fmt.Sprintf(`,{"term":{"hasIcon":%t}}`, q.HasIcon.Value)
 			}
 			return ""
 		}(),
 		func() string {
 			if q.HasPhotorep.On {
-				return fmt.Sprintf(`,{"term":{"hasPhotorep":%d}}`, q.HasPhotorep.Value)
+				return fmt.Sprintf(`,{"term":{"hasPhotorep":%t}}`, q.HasPhotorep.Value)
 			}
 			return ""
 		}(),
 		func() string {
 			if q.HasVideo.On {
-				return fmt.Sprintf(`,{"term":{"hasVideo":%d}}`, q.HasVideo.Value)
+				return fmt.Sprintf(`,{"term":{"hasVideo":%t}}`, q.HasVideo.Value)
 			}
 			return ""
 		}(),
 		func() string {
 			if q.IsNews.On {
-				return fmt.Sprintf(`,{"term":{"isNews":%d}}`, q.IsNews.Value)
+				return fmt.Sprintf(`,{"term":{"isNews":%t}}`, q.IsNews.Value)
 			}
 			return ""
 		}(),
 		func() string {
 			if q.IsSpiegel.On {
-				return fmt.Sprintf(`,{"term":{"isSpiegel":%d}}`, q.IsSpiegel.Value)
+				return fmt.Sprintf(`,{"term":{"is_spiegel":%t}}`, q.IsSpiegel.Value)
 			}
 			return ""
 		}(),
@@ -264,13 +264,13 @@ func (q *Query) String() string {
 		}(),
 		func() string {
 			if q.Collection.On && q.IsMainColl.On {
-				return fmt.Sprintf(`,{"term":{"isMainColl":%d}}`, q.IsMainColl.Value)
+				return fmt.Sprintf(`,{"term":{"isMainColl":%t}}`, q.IsMainColl.Value)
 			}
 			return ""
 		}(),
 		func() string {
 			if q.Project.On && q.IsMainProject.On {
-				return fmt.Sprintf(`,{"term":{"isMainProject":%d}}`, q.IsMainProject.Value)
+				return fmt.Sprintf(`,{"term":{"isMainProject":%t}}`, q.IsMainProject.Value)
 			}
 			return ""
 		}(),
