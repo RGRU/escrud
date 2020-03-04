@@ -142,19 +142,19 @@ type Query struct {
 		Value bool
 	}
 	// project
-	Project struct {
+	Projects struct {
 		On    bool
-		Value int
+		Values []int
 	}
 	// rubric
-	Rubric struct {
+	Rubrics struct {
 		On    bool
-		Value int
+		Values []int
 	}
 	// collection
-	Collection struct {
+	Collections struct {
 		On    bool
-		Value int
+		Values []int
 	}
 	// Tags
 	Tags struct {
@@ -231,20 +231,23 @@ func (q *Query) String() string {
 			return ""
 		}(),
 		func() string {
-			if q.Project.On {
-				return fmt.Sprintf(`,{"term":{"project":%d}}`, q.Project.Value)
+			if q.Projects.On {
+				joined := strings.Trim(strings.Replace(fmt.Sprint(q.Projects.Values), " ", ",", -1), "[]")
+				return fmt.Sprintf(`,{"terms":{"projects":[%s]}}`, joined)
 			}
 			return ""
 		}(),
 		func() string {
-			if q.Rubric.On {
-				return fmt.Sprintf(`,{"term":{"rubric":%d}}`, q.Rubric.Value)
+			if q.Rubrics.On {
+				joined := strings.Trim(strings.Replace(fmt.Sprint(q.Rubrics.Values), " ", ",", -1), "[]")
+				return fmt.Sprintf(`,{"terms":{"rubrics":[%s]}}`, joined)
 			}
 			return ""
 		}(),
 		func() string {
-			if q.Collection.On {
-				return fmt.Sprintf(`,{"term":{"collection":%d}}`, q.Collection.Value)
+			if q.Collections.On {
+				joined := strings.Trim(strings.Replace(fmt.Sprint(q.Collections.Values), " ", ",", -1), "[]")
+				return fmt.Sprintf(`,{"terms":{"collections":[%s]}}`, joined)
 			}
 			return ""
 		}(),
@@ -263,13 +266,13 @@ func (q *Query) String() string {
 			return ""
 		}(),
 		func() string {
-			if q.Collection.On && q.IsMainColl.On {
+			if q.Collections.On && q.IsMainColl.On {
 				return fmt.Sprintf(`,{"term":{"isMainColl":%t}}`, q.IsMainColl.Value)
 			}
 			return ""
 		}(),
 		func() string {
-			if q.Project.On && q.IsMainProject.On {
+			if q.Projects.On && q.IsMainProject.On {
 				return fmt.Sprintf(`,{"term":{"isMainProject":%t}}`, q.IsMainProject.Value)
 			}
 			return ""
