@@ -143,17 +143,17 @@ type Query struct {
 	}
 	// project
 	Projects struct {
-		On    bool
+		On     bool
 		Values []int
 	}
 	// rubric
 	Rubrics struct {
-		On    bool
+		On     bool
 		Values []int
 	}
 	// collection
 	Collections struct {
-		On    bool
+		On     bool
 		Values []int
 	}
 	// Tags
@@ -233,35 +233,35 @@ func (q *Query) String() string {
 		func() string {
 			if q.Projects.On {
 				joined := strings.Trim(strings.Replace(fmt.Sprint(q.Projects.Values), " ", ",", -1), "[]")
-				return fmt.Sprintf(`,{"terms":{"projects":[%s]}}`, joined)
+				return fmt.Sprintf(`,{"terms":{"projects.id":[%s]}}`, joined)
 			}
 			return ""
 		}(),
 		func() string {
 			if q.Rubrics.On {
 				joined := strings.Trim(strings.Replace(fmt.Sprint(q.Rubrics.Values), " ", ",", -1), "[]")
-				return fmt.Sprintf(`,{"terms":{"rubrics":[%s]}}`, joined)
+				return fmt.Sprintf(`,{"terms":{"rubrics.id":[%s]}}`, joined)
 			}
 			return ""
 		}(),
 		func() string {
 			if q.Collections.On {
 				joined := strings.Trim(strings.Replace(fmt.Sprint(q.Collections.Values), " ", ",", -1), "[]")
-				return fmt.Sprintf(`,{"terms":{"collections":[%s]}}`, joined)
+				return fmt.Sprintf(`,{"terms":{"collections.id":[%s]}}`, joined)
 			}
 			return ""
 		}(),
 		func() string {
 			if q.Authors.On {
 				joined := strings.Trim(strings.Replace(fmt.Sprint(q.Authors.Values), " ", ",", -1), "[]")
-				return fmt.Sprintf(`,{"terms":{"authors":[%s]}}`, joined)
+				return fmt.Sprintf(`,{"terms":{"authors.id":[%s]}}`, joined)
 			}
 			return ""
 		}(),
 		func() string {
 			if q.Tags.On {
 				joined := strings.Trim(strings.Replace(fmt.Sprint(q.Tags.Values), " ", ",", -1), "[]")
-				return fmt.Sprintf(`,{"terms":{"tags":[%s]}}`, joined)
+				return fmt.Sprintf(`,{"terms":{"tags.id":[%s]}}`, joined)
 			}
 			return ""
 		}(),
