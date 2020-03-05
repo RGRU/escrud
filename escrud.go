@@ -202,25 +202,25 @@ func (q *Query) String() string {
 		q.MustNotRangeIDLessThan.Value,
 		func() string {
 			if q.HasIcon.On {
-				return fmt.Sprintf(`,{"term":{"hasIcon":%t}}`, q.HasIcon.Value)
+				return fmt.Sprintf(`,{"term":{"has_icon":%t}}`, q.HasIcon.Value)
 			}
 			return ""
 		}(),
 		func() string {
 			if q.HasPhotorep.On {
-				return fmt.Sprintf(`,{"term":{"hasPhotorep":%t}}`, q.HasPhotorep.Value)
+				return fmt.Sprintf(`,{"term":{"has_photorep":%t}}`, q.HasPhotorep.Value)
 			}
 			return ""
 		}(),
 		func() string {
 			if q.HasVideo.On {
-				return fmt.Sprintf(`,{"term":{"hasVideo":%t}}`, q.HasVideo.Value)
+				return fmt.Sprintf(`,{"term":{"has_video":%t}}`, q.HasVideo.Value)
 			}
 			return ""
 		}(),
 		func() string {
 			if q.IsNews.On {
-				return fmt.Sprintf(`,{"term":{"isNews":%t}}`, q.IsNews.Value)
+				return fmt.Sprintf(`,{"term":{"is_news":%t}}`, q.IsNews.Value)
 			}
 			return ""
 		}(),
@@ -267,13 +267,13 @@ func (q *Query) String() string {
 		}(),
 		func() string {
 			if q.Collections.On && q.IsMainColl.On {
-				return fmt.Sprintf(`,{"term":{"isMainColl":%t}}`, q.IsMainColl.Value)
+				return fmt.Sprintf(`,{"term":{"is_main_coll":%t}}`, q.IsMainColl.Value)
 			}
 			return ""
 		}(),
 		func() string {
 			if q.Projects.On && q.IsMainProject.On {
-				return fmt.Sprintf(`,{"term":{"isMainProject":%t}}`, q.IsMainProject.Value)
+				return fmt.Sprintf(`,{"term":{"is_main_project":%t}}`, q.IsMainProject.Value)
 			}
 			return ""
 		}(),
