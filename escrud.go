@@ -181,10 +181,10 @@ type Query struct {
 		On    bool
 		Value string
 	}
-	// WordOr to find word OR word OR...
-	WordOr struct {
+	// Words to find word OR word OR...
+	Words struct {
 		On    bool
-		Value string
+		Values []string
 	}
 	// Phrase to find exact phrase
 	Phrase struct {
@@ -284,8 +284,9 @@ func (q *Query) String() string {
 			return ""
 		}(),
 		func() string {
-			if q.WordOr.On {
-				return fmt.Sprintf(`,"must":{"match":{"text":%q}}`, q.WordOr.Value)
+			if q.Words.On {
+				words := strings.Join(q.Words.Values, " ")
+				return fmt.Sprintf(`,"must":{"match":{"text":%q}}`, words)
 			}
 			if q.Phrase.On {
 				return fmt.Sprintf(`,"must":{"match_phrase":{"text":%q}}`, q.Phrase.Value)
