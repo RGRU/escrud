@@ -6,24 +6,6 @@ import (
 	"testing"
 )
 
-func TestSearch(t *testing.T) {
-	q := new(Query)
-	//q.Size = 5
-	q.MustNotRangeIDLessThan.Value = 10
-	q.MustNotRangeIDGreaterThan.Value = 5
-	q.FilterRangeLessThan.Value = 12
-	q.FilterRangeGreaterThan.Value = 0
-
-	fmt.Println(q)
-
-	resp, err := q.Search()
-	if err != nil {
-		t.Errorf("ERR: %v", err)
-	}
-
-	fmt.Printf("%s\n", resp)
-}
-
 func TestCreateSource(t *testing.T) {
 	err := Create("2", []byte(`{
 			"user": "barsuk",
