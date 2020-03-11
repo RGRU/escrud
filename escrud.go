@@ -356,6 +356,30 @@ func (q *Query) Search() (result []byte, err error) {
 	return resp, nil
 }
 
+// Exists checks if there's a document with such id in such an index
+func Exists(index string, id string) (exists bool, err error) {
+	if len(id) < 1 {
+		return false, fmt.Errorf("id too short")
+	}
+
+	if len(index) < 1 {
+		return false, fmt.Errorf("index name too short")
+	}
+
+	res, err := Es.Exists(index, id)
+	if err != nil {
+		return false, err
+	}
+	switch res.StatusCode {
+	case 200:
+		return true, nil
+	case 404:
+		return false, nil
+	default:
+		return false, fmt.Errorf("[%s]", res.Status())
+	}
+}
+
 // Create should contain a valid JSON with key {..."id":your_unique_id}
 func Create(id string, data []byte) (err error) {
 	if len(data) < 1 {

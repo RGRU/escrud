@@ -130,6 +130,37 @@ func TestCreatePartialUpdate(t *testing.T) {
 	}
 }
 
+func TestCreateExists(t *testing.T) {
+	id := "asdfasfsafsdfsd-asdf_asdfasf4"
+
+	if ok, err := Exists("gl", id); ok {
+		if err != nil {
+			fmt.Printf("тут ещё какая-то ошибка: %v", err)
+		}
+		t.Errorf("there should not exist index with such an id")
+	}
+
+	err := Create(id, []byte(`{
+			"user": "slivki",
+			"aim": "test read create",
+			"text": "Вот такой текстовый текст"
+		}`))
+	if err != nil {
+		t.Errorf("ERR: %v", err)
+	}
+
+	if ok, err := Exists("gl", id); !ok {
+		if err != nil {
+			fmt.Printf("тут ещё какая-то ошибка: %v", err)
+		}
+		t.Errorf("now there must be exist such an id")
+	}
+
+	if _, err = Delete(id); err != nil {
+		t.Errorf("cannot delete id %s: %v", id, err)
+	}
+}
+
 func TestCreateUpdate(t *testing.T) {
 	id := "asdfasfsafsdfsd-asdf_asdfasf4"
 	err := Create(id, []byte(`{
