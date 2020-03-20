@@ -1,4 +1,4 @@
-module github.com/barsuk/escrud/v2
+module github.com/RGRU/escrud/v2
 
 go 1.13
 
