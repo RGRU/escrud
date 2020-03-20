@@ -11,8 +11,6 @@ import (
 	"os"
 )
 
-const IndexName = `gl`
-
 var Es *elasticsearch.Client
 
 type Created struct {
@@ -62,14 +60,14 @@ func init() {
 	log.Println(info)
 }
 
-func Update(id string, data []byte) (Updated, error) {
+func Update(index, id string, data []byte) (Updated, error) {
 	templ := []byte(`{"doc":`)
 	templ = append(templ, data...)
 	templ = append(templ, []byte(`}`)...)
 
 	var upd Updated
 	res, err := Es.Update(
-		IndexName,
+		index,
 		id,
 		bytes.NewReader(templ),
 		Es.Update.WithPretty(),
@@ -120,13 +118,13 @@ func Exists(index string, id string) (exists bool, err error) {
 }
 
 // Create should contain a valid JSON with key {..."id":your_unique_id}
-func Create(id string, data []byte) (err error) {
+func Create(index string, id string, data []byte) (err error) {
 	if len(data) < 1 {
 		data = []byte(fmt.Sprintf(`{"id":%s}`, id))
 	}
 
 	res, err := Es.Index(
-		IndexName,
+		index,
 		bytes.NewReader(data),
 		Es.Index.WithDocumentID(id),
 		Es.Index.WithPretty(),
@@ -165,9 +163,9 @@ func Create(id string, data []byte) (err error) {
 	return nil
 }
 
-func Delete(id string) (Deleted, error) {
+func Delete(index, id string) (Deleted, error) {
 	var deleted Deleted
-	res, err := Es.Delete(IndexName, id,
+	res, err := Es.Delete(index, id,
 		Es.Delete.WithPretty())
 	if err != nil {
 		return deleted, fmt.Errorf("cannot delete entry: %v", err)
@@ -189,8 +187,8 @@ func Delete(id string) (Deleted, error) {
 	return deleted, nil
 }
 
-func Source(id string) ([]byte, error) {
-	res, err := Es.GetSource(IndexName, id,
+func Source(index, id string) ([]byte, error) {
+	res, err := Es.GetSource(index, id,
 		Es.GetSource.WithPretty())
 	if err != nil {
 		return nil, fmt.Errorf("cannot read entry: %v", err)
@@ -209,9 +207,9 @@ func Source(id string) ([]byte, error) {
 	return resp, nil
 }
 
-func Read(id string) (Got, error) {
+func Read(index, id string) (Got, error) {
 	var got Got
-	res, err := Es.Get(IndexName, id,
+	res, err := Es.Get(index, id,
 		//Es.Get.WithSourceIncludes("text,user"),
 		Es.Get.WithPretty())
 	if err != nil {
