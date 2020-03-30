@@ -5,96 +5,115 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/elastic/go-elasticsearch/v8"
 	"io/ioutil"
 	"log"
-	"os"
+
+	"github.com/elastic/go-elasticsearch/v8"
+	"github.com/elastic/go-elasticsearch/v8/esapi"
 )
 
-var Es *elasticsearch.Client
-
-type Created struct {
-	ID string `json:"_id"`
+// ResponseBody struct from elastic
+type ResponseBody struct {
+	Index   string      `json:"_index,omitempty"`
+	ID      string      `json:"_id,omitempty"`
+	Version int         `json:"_version,omitempty"`
+	Source  interface{} `json:"_source,omitempty"`
+	Result  string      `json:"result,omitempty"`
 }
 
-type Updated struct {
-	Index   string `json:"_index"`
-	ID      string `json:"_id"`
-	Version int    `json:"_version"`
-	Result  string `json:"result"`
+// Client elasticsearch
+type Client struct {
+	Client *elasticsearch.Client
+	Info   *esapi.Response
 }
 
-type Deleted struct {
-	Index   string `json:"_index"`
-	ID      string `json:"_id"`
-	Version int    `json:"_version"`
-	Result  string `json:"result"`
-}
-
-type Got struct {
-	Index   string      `json:"_index"`
-	ID      string      `json:"_id"`
-	Version int         `json:"_version"`
-	Source  interface{} `json:"_source"`
-}
-
-func init() {
+// Connect to a elastic
+func Connect(host string, port int) (*Client, error) {
 	var err error
-
 	//Es, err = elasticsearch.NewDefaultClient()
-	esServer := fmt.Sprintf("http://%s:9200", os.Getenv("ELASTIC"))
+	esServer := fmt.Sprintf("http://%s:%d", host, port)
 	cfg := elasticsearch.Config{Addresses: []string{esServer}}
-	Es, err = elasticsearch.NewClient(cfg)
+	es, err := elasticsearch.NewClient(cfg)
 	if err != nil {
 		log.Fatalf("Error creating the client: %s\n", err)
-		os.Exit(1)
+		return nil, err
 	}
-	log.Println(elasticsearch.Version)
-	info, err := Es.Info()
+	log.Println("Elasticsearch version:", elasticsearch.Version)
+	info, err := es.Info()
 	if err != nil {
 		log.Printf("Cannot get server info: %s\n", err)
 		log.Printf("You should check Elastic health!")
-		//os.Exit(1)
+		return nil, err
 	}
-
-	log.Println(info)
+	return &Client{
+		Client: es,
+		Info:   info,
+	}, nil
 }
 
-func Update(index, id string, data []byte) (Updated, error) {
+// Update record by id in elasticsearch
+func (Es *Client) Update(index, id string, data []byte) (*ResponseBody, error) {
+	return update(Es.Client, index, id, data)
+}
+
+// Exists checks if there's a document with such id in such an index
+func (Es *Client) Exists(index string, id string) (bool, error) {
+	return exists(Es.Client, index, id)
+}
+
+// Create record in elasticsearch
+// should contain a valid JSON with key {..."id":your_unique_id}
+func (Es *Client) Create(index string, id string, data []byte) error {
+	return create(Es.Client, index, id, data)
+}
+
+// Delete record by id in elasticsearch
+func (Es *Client) Delete(index, id string) (*ResponseBody, error) {
+	return delete(Es.Client, index, id)
+}
+
+// Source get source
+func (Es *Client) Source(index, id string) ([]byte, error) {
+	return source(Es.Client, index, id)
+}
+
+func (Es *Client) Read(index, id string) (*ResponseBody, error) {
+	return read(Es.Client, index, id)
+}
+
+func update(es *elasticsearch.Client, index, id string, data []byte) (*ResponseBody, error) {
 	templ := []byte(`{"doc":`)
 	templ = append(templ, data...)
 	templ = append(templ, []byte(`}`)...)
 
-	var upd Updated
-	res, err := Es.Update(
+	res, err := es.Update(
 		index,
 		id,
 		bytes.NewReader(templ),
-		Es.Update.WithPretty(),
+		es.Update.WithPretty(),
 	)
 	if err != nil {
-		return upd, fmt.Errorf("cannot update entry: %v", err)
+		return nil, fmt.Errorf("cannot update entry: %v", err)
 	}
 	defer res.Body.Close()
 
 	if res.IsError() {
-		return upd, fmt.Errorf("bad connection? Status: %s, err: %v", res.Status(), err)
+		return nil, fmt.Errorf("bad connection: status: %s, err: %v", res.Status(), err)
 	}
 
 	resp, err := ioutil.ReadAll(res.Body)
 	if err != nil {
-		return upd, fmt.Errorf("cannot read response body: %v", err)
+		return nil, fmt.Errorf("cannot read response body: %v", err)
 	}
 
-	if err := json.Unmarshal(resp, &upd); err != nil {
-		return upd, fmt.Errorf("response contains bad json: %v", err)
+	var rb *ResponseBody
+	if err := json.Unmarshal(resp, &rb); err != nil {
+		return rb, fmt.Errorf("response contains bad json: %v", err)
 	}
-
-	return upd, nil
+	return rb, nil
 }
 
-// Exists checks if there's a document with such id in such an index
-func Exists(index string, id string) (exists bool, err error) {
+func exists(es *elasticsearch.Client, index string, id string) (exists bool, err error) {
 	if len(id) < 1 {
 		return false, fmt.Errorf("id too short")
 	}
@@ -103,7 +122,7 @@ func Exists(index string, id string) (exists bool, err error) {
 		return false, fmt.Errorf("index name too short")
 	}
 
-	res, err := Es.Exists(index, id)
+	res, err := es.Exists(index, id)
 	if err != nil {
 		return false, err
 	}
@@ -117,17 +136,16 @@ func Exists(index string, id string) (exists bool, err error) {
 	}
 }
 
-// Create should contain a valid JSON with key {..."id":your_unique_id}
-func Create(index string, id string, data []byte) (err error) {
+func create(es *elasticsearch.Client, index string, id string, data []byte) (err error) {
 	if len(data) < 1 {
 		data = []byte(fmt.Sprintf(`{"id":%s}`, id))
 	}
 
-	res, err := Es.Index(
+	res, err := es.Index(
 		index,
 		bytes.NewReader(data),
-		Es.Index.WithDocumentID(id),
-		Es.Index.WithPretty(),
+		es.Index.WithDocumentID(id),
+		es.Index.WithPretty(),
 	)
 	if err != nil {
 		return fmt.Errorf("cannot create entry: %v", err)
@@ -140,63 +158,25 @@ func Create(index string, id string, data []byte) (err error) {
 	}
 
 	if res.IsError() {
-		// с доков пакета го-эластик.
-		//var e map[string]interface{}
-		//if err := json.NewDecoder(res.Body).Decode(&e); err != nil {
-		//	log.Fatalf("Error parsing the response body: %s", err)
-		//} else {
-		//	// Print the response status and error information.
-		//	log.Fatalf("[%s] %s: %s",
-		//		res.Status(),
-		//		e["error"].(map[string]interface{})["type"],
-		//		e["error"].(map[string]interface{})["reason"],
-		//	)
-		//}
-		return fmt.Errorf("bad connection? %s", resp)
+		return fmt.Errorf("bad connection: %s", resp)
 	}
 
-	var created Created
-	if err := json.Unmarshal(resp, &created); err != nil {
+	var rb ResponseBody
+	if err := json.Unmarshal(resp, &rb); err != nil {
 		return fmt.Errorf("response contains bad json: %v", err)
 	}
-
 	return nil
 }
 
-func Delete(index, id string) (Deleted, error) {
-	var deleted Deleted
-	res, err := Es.Delete(index, id,
-		Es.Delete.WithPretty())
+func delete(es *elasticsearch.Client, index, id string) (*ResponseBody, error) {
+	res, err := es.Delete(index, id,
+		es.Delete.WithPretty())
 	if err != nil {
-		return deleted, fmt.Errorf("cannot delete entry: %v", err)
+		return nil, fmt.Errorf("cannot delete entry: %v", err)
 	}
 	defer res.Body.Close()
 	if res.IsError() {
-		return deleted, fmt.Errorf("bad connection? %v", err)
-	}
-
-	resp, err := ioutil.ReadAll(res.Body)
-	if err != nil {
-		return deleted, fmt.Errorf("cannot read response body: %v", err)
-	}
-
-	if err := json.Unmarshal(resp, &deleted); err != nil {
-		return deleted, fmt.Errorf("response contains bad json: %v", err)
-	}
-
-	return deleted, nil
-}
-
-func Source(index, id string) ([]byte, error) {
-	res, err := Es.GetSource(index, id,
-		Es.GetSource.WithPretty())
-	if err != nil {
-		return nil, fmt.Errorf("cannot read entry: %v", err)
-	}
-	defer res.Body.Close()
-
-	if res.IsError() {
-		return nil, fmt.Errorf("bad connection? %v", err)
+		return nil, fmt.Errorf("bad connection: %v", err)
 	}
 
 	resp, err := ioutil.ReadAll(res.Body)
@@ -204,29 +184,51 @@ func Source(index, id string) ([]byte, error) {
 		return nil, fmt.Errorf("cannot read response body: %v", err)
 	}
 
-	return resp, nil
+	var rb *ResponseBody
+	if err := json.Unmarshal(resp, &rb); err != nil {
+		return rb, fmt.Errorf("response contains bad json: %v", err)
+	}
+	return rb, nil
 }
 
-func Read(index, id string) (Got, error) {
-	var got Got
-	res, err := Es.Get(index, id,
-		//Es.Get.WithSourceIncludes("text,user"),
-		Es.Get.WithPretty())
+func source(es *elasticsearch.Client, index, id string) ([]byte, error) {
+	res, err := es.GetSource(index, id,
+		es.GetSource.WithPretty())
 	if err != nil {
-		return got, fmt.Errorf("cannot read entry: %v", err)
+		return nil, fmt.Errorf("cannot read entry: %v", err)
 	}
+	defer res.Body.Close()
+
 	if res.IsError() {
-		return got, fmt.Errorf("bad connection? %v", err)
+		return nil, fmt.Errorf("bad connection: %v", err)
 	}
 
 	resp, err := ioutil.ReadAll(res.Body)
 	if err != nil {
-		return got, fmt.Errorf("cannot read response body: %v", err)
+		return nil, fmt.Errorf("cannot read response body: %v", err)
+	}
+	return resp, nil
+}
+
+func read(es *elasticsearch.Client, index, id string) (*ResponseBody, error) {
+	res, err := es.Get(index, id,
+		//Es.Get.WithSourceIncludes("text,user"),
+		es.Get.WithPretty())
+	if err != nil {
+		return nil, fmt.Errorf("cannot read entry: %v", err)
+	}
+	if res.IsError() {
+		return nil, fmt.Errorf("bad connection: %v", err)
 	}
 
-	if err := json.Unmarshal(resp, &got); err != nil {
-		return got, fmt.Errorf("response contains bad json: %v", err)
+	resp, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		return nil, fmt.Errorf("cannot read response body: %v", err)
 	}
 
-	return got, nil
+	var rb *ResponseBody
+	if err := json.Unmarshal(resp, &rb); err != nil {
+		return rb, fmt.Errorf("response contains bad json: %v", err)
+	}
+	return rb, nil
 }

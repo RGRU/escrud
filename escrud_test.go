@@ -3,11 +3,24 @@ package escrud
 import (
 	"encoding/json"
 	"fmt"
+	"os"
 	"testing"
 )
 
+var Es = Conn()
+
+// Connect to elasticsearch
+func Conn() *Client {
+	es, err := Connect(os.Getenv("ELASTIC"), 9200)
+	if err != nil {
+		fmt.Println("Elasticsearch error:", err)
+	}
+	fmt.Println("Elasticsearch info:", es.Info)
+	return es
+}
+
 func TestCreateSource(t *testing.T) {
-	err := Create("test","2", []byte(`{
+	err := Es.Create("test", "2", []byte(`{
 			"user": "barsuk",
 			"aim": "test Es",
 			"text": "как изменилась сеть?"
@@ -16,7 +29,7 @@ func TestCreateSource(t *testing.T) {
 		t.Errorf("ERR: %v", err)
 	}
 
-	got, err := Source("test","2")
+	got, err := Es.Source("test", "2")
 	if err != nil {
 		t.Errorf("ERR: %v", err)
 	}
@@ -38,7 +51,7 @@ func TestCreateSource(t *testing.T) {
 
 func TestCreateDelete(t *testing.T) {
 	id := "3puopiupoiupasdfdasfpoasfiu"
-	err := Create("test",id, []byte(`{
+	err := Es.Create("test", id, []byte(`{
 			"user": "slivki",
 			"aim": "test read create",
 			"text": "наверное, как-то изменилась."
@@ -47,7 +60,7 @@ func TestCreateDelete(t *testing.T) {
 		t.Errorf("ERR: %v", err)
 	}
 
-	got, err := Delete("test",id)
+	got, err := Es.Delete("test", id)
 	if err != nil {
 		t.Errorf("cannot delete id %s: %v", id, err)
 	}
@@ -59,7 +72,7 @@ func TestCreateDelete(t *testing.T) {
 
 func TestCreatePartialUpdate(t *testing.T) {
 	id := "test-2asdfasdfasdf2"
-	err := Create("test",id, []byte(`{
+	err := Es.Create("test", id, []byte(`{
 			"user": "slivki",
 			"aim": "test partial update",
 			"text": "Вот такой текстовый текст"
@@ -69,7 +82,7 @@ func TestCreatePartialUpdate(t *testing.T) {
 	}
 
 	s := `{"text": "ОТ ТАКОЙ ТЕКСТИЩЕ ТЕПЕРЬ ВЗАМЕН!"}`
-	upd, err := Update("test",id, []byte(s))
+	upd, err := Es.Update("test", id, []byte(s))
 	if err != nil {
 		t.Errorf("cannot update id %s: %v", id, err)
 		return
@@ -80,7 +93,7 @@ func TestCreatePartialUpdate(t *testing.T) {
 		return
 	}
 
-	got, err := Source("test",id)
+	got, err := Es.Source("test", id)
 	if err != nil {
 		t.Errorf("cannot read id %s: %v", id, err)
 	}
@@ -107,7 +120,7 @@ func TestCreatePartialUpdate(t *testing.T) {
 		t.Errorf("update failed: %v", err)
 	}
 
-	if _, err = Delete("test",id); err != nil {
+	if _, err = Es.Delete("test", id); err != nil {
 		t.Errorf("cannot delete id %s: %v", id, err)
 	}
 }
@@ -115,14 +128,14 @@ func TestCreatePartialUpdate(t *testing.T) {
 func TestCreateExists(t *testing.T) {
 	id := "asdfasfsafsdfsd-asdf_asdfasf4"
 
-	if ok, err := Exists("test", id); ok {
+	if ok, err := Es.Exists("test", id); ok {
 		if err != nil {
 			fmt.Printf("тут ещё какая-то ошибка: %v", err)
 		}
 		t.Errorf("there should not exist index with such an id")
 	}
 
-	err := Create("test",id, []byte(`{
+	err := Es.Create("test", id, []byte(`{
 			"user": "slivki",
 			"aim": "test read create",
 			"text": "Вот такой текстовый текст"
@@ -131,21 +144,21 @@ func TestCreateExists(t *testing.T) {
 		t.Errorf("ERR: %v", err)
 	}
 
-	if ok, err := Exists("test", id); !ok {
+	if ok, err := Es.Exists("test", id); !ok {
 		if err != nil {
 			fmt.Printf("тут ещё какая-то ошибка: %v", err)
 		}
 		t.Errorf("now there must be exist such an id")
 	}
 
-	if _, err = Delete("test",id); err != nil {
+	if _, err = Es.Delete("test", id); err != nil {
 		t.Errorf("cannot delete id %s: %v", id, err)
 	}
 }
 
 func TestCreateUpdate(t *testing.T) {
 	id := "asdfasfsafsdfsd-asdf_asdfasf4"
-	err := Create("test",id, []byte(`{
+	err := Es.Create("test", id, []byte(`{
 			"user": "slivki",
 			"aim": "test read create",
 			"text": "Вот такой текстовый текст"
@@ -154,7 +167,7 @@ func TestCreateUpdate(t *testing.T) {
 		t.Errorf("ERR: %v", err)
 	}
 
-	upd, err := Update("test",id, []byte(`{
+	upd, err := Es.Update("test", id, []byte(`{
 				"user": "slivki",
 				"aim": "test read create",
 				"text": "ОТ ТАКОЙ ТЕКСТИЩЕ ТЕПЕРЬ ВЗАМЕН!"
@@ -168,7 +181,7 @@ func TestCreateUpdate(t *testing.T) {
 		t.Errorf("cannot update id %s", id)
 	}
 
-	got, err := Source("test",id)
+	got, err := Es.Source("test", id)
 	if err != nil {
 		t.Errorf("cannot read id %s: %v", id, err)
 	}
@@ -187,14 +200,14 @@ func TestCreateUpdate(t *testing.T) {
 		t.Errorf("update failed: %v", err)
 	}
 
-	if _, err = Delete("test",id); err != nil {
+	if _, err = Es.Delete("test", id); err != nil {
 		t.Errorf("cannot delete id %s: %v", id, err)
 	}
 }
 
 func TestCreateRead(t *testing.T) {
 	id := "asdfasdfasdfsdf-asfasdf_asdfasdfas5"
-	err := Create("test",id, []byte(`{
+	err := Es.Create("test", id, []byte(`{
 			"user": "slivki",
 			"aim": "test read create",
 			"text": "наверное, как-то изменилась."
@@ -203,7 +216,7 @@ func TestCreateRead(t *testing.T) {
 		t.Errorf("ERR: %v", err)
 	}
 
-	got, err := Read("test",id)
+	got, err := Es.Read("test", id)
 	if err != nil {
 		t.Errorf("cannot read id %s: %v", id, err)
 	}
@@ -213,13 +226,13 @@ func TestCreateRead(t *testing.T) {
 		t.Errorf("should be `slivki`! But : %s", source["user"])
 	}
 
-	if _, err = Delete("test",id); err != nil {
+	if _, err = Es.Delete("test", id); err != nil {
 		t.Errorf("cannot delete id %s: %v", id, err)
 	}
 }
 
 func _Read(t *testing.T) {
-	got, err := Read("test",`A_rZ528BFcFwXbplhTED`)
+	got, err := Es.Read("test", `A_rZ528BFcFwXbplhTED`)
 	if err != nil {
 		t.Errorf("ERR: %v", err)
 	}
