@@ -38,11 +38,11 @@ type Got struct {
 	Source  interface{} `json:"_source"`
 }
 
-func init() {
+func Connect(host string, port int) {
 	var err error
 
 	//Es, err = elasticsearch.NewDefaultClient()
-	esServer := fmt.Sprintf("http://%s:9200", os.Getenv("ELASTIC"))
+	esServer := fmt.Sprintf("http://%s:%d", host, port)
 	cfg := elasticsearch.Config{Addresses: []string{esServer}}
 	Es, err = elasticsearch.NewClient(cfg)
 	if err != nil {
