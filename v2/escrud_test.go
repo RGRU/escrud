@@ -7,29 +7,20 @@ import (
 	"testing"
 )
 
-var err error
-
-// func init() {
-// 	err = Connect(os.Getenv("ELASTIC"), 9200)
-// 	if err != nil {
-// 		fmt.Printf("ERR: %v", err)
-// 	}
-// }
-
 var Es = Conn()
 
 // Connect to elasticsearch
 func Conn() *Client {
-	es, info, err := Connect(os.Getenv("ELASTIC"), 9200)
+	es, err := Connect(os.Getenv("ELASTIC"), 9200)
 	if err != nil {
 		fmt.Println("Elasticsearch error:", err)
 	}
-	fmt.Println("Elasticsearch info:", info)
+	fmt.Println("Elasticsearch info:", es.Info)
 	return es
 }
 
 func TestCreateSource(t *testing.T) {
-	err = Es.Create("test", "2", []byte(`{
+	err := Es.Create("test", "2", []byte(`{
 			"user": "barsuk",
 			"aim": "test Es",
 			"text": "как изменилась сеть?"
