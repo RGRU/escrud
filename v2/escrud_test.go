@@ -3,11 +3,21 @@ package escrud
 import (
 	"encoding/json"
 	"fmt"
+	"os"
 	"testing"
 )
 
+var err error
+
+func init() {
+	err = Connect(os.Getenv("ELASTIC"), 9200)
+	if err != nil {
+		fmt.Printf("ERR: %v", err)
+	}
+}
+
 func TestCreateSource(t *testing.T) {
-	err := Create("test","2", []byte(`{
+	err = Create("test","2", []byte(`{
 			"user": "barsuk",
 			"aim": "test Es",
 			"text": "как изменилась сеть?"

@@ -8,7 +8,6 @@ import (
 	"github.com/elastic/go-elasticsearch/v8"
 	"io/ioutil"
 	"log"
-	"os"
 )
 
 var Es *elasticsearch.Client
@@ -38,7 +37,7 @@ type Got struct {
 	Source  interface{} `json:"_source"`
 }
 
-func Connect(host string, port int) {
+func Connect(host string, port int) error {
 	var err error
 
 	//Es, err = elasticsearch.NewDefaultClient()
@@ -47,17 +46,19 @@ func Connect(host string, port int) {
 	Es, err = elasticsearch.NewClient(cfg)
 	if err != nil {
 		log.Fatalf("Error creating the client: %s\n", err)
-		os.Exit(1)
+		return err
 	}
 	log.Println(elasticsearch.Version)
 	info, err := Es.Info()
 	if err != nil {
 		log.Printf("Cannot get server info: %s\n", err)
 		log.Printf("You should check Elastic health!")
-		//os.Exit(1)
+		return err
 	}
 
 	log.Println(info)
+
+	return nil
 }
 
 func Update(index, id string, data []byte) (Updated, error) {
