@@ -95,6 +95,49 @@ func Update(id string, data []byte) (Updated, error) {
 	return upd, nil
 }
 
+// RemoveArrayItem удалить элемент массива по его параметру (пока только числовой ID)
+// POST http://localhost:9200/mask/_update/_3/
+// { "script": { "source": "ctx._source.mask_articles.removeIf(li -> li.article_id == params.article_id)", "params": { "article_id": 1886746 } } }
+func RemoveArrayItem(index string, docID string, arrayName string, itemName string, itemValue int) (Updated, error) {
+	templ := fmt.Sprintf(`
+{
+  "script": {
+    "source": "ctx._source.%s.removeIf(li -> li.%s == params.id)",
+    "params": {
+      "id": %d
+    }
+  }
+}
+`, arrayName, itemName, itemValue)
+
+	var upd Updated
+	res, err := Es.Update(
+		index,
+		docID,
+		bytes.NewReader([]byte(templ)),
+		Es.Update.WithPretty(),
+	)
+	if err != nil {
+		return upd, fmt.Errorf("cannot update entry: %v", err)
+	}
+	defer res.Body.Close()
+
+	if res.IsError() {
+		return upd, fmt.Errorf("bad connection? Status: %s, err: %v", res.Status(), err)
+	}
+
+	resp, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		return upd, fmt.Errorf("cannot read response body: %v", err)
+	}
+
+	if err := json.Unmarshal(resp, &upd); err != nil {
+		return upd, fmt.Errorf("response contains bad json: %v", err)
+	}
+
+	return upd, nil
+}
+
 // Exists checks if there's a document with such id in such an index
 func Exists(index string, id string) (exists bool, err error) {
 	if len(id) < 1 {
