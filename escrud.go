@@ -81,17 +81,10 @@ func (Es *Client) Read(index, id string) (*ResponseBody, error) {
 	return read(Es.Client, index, id)
 }
 
-type Updated struct {
-	Index   string `json:"_index"`
-	ID      string `json:"_id"`
-	Version int    `json:"_version"`
-	Result  string `json:"result"`
-}
-
 // RemoveArrayItem удалить элемент массива по его параметру (пока только числовой ID)
 // POST http://localhost:9200/mask/_update/_3/
 // { "script": { "source": "ctx._source.mask_articles.removeIf(li -> li.article_id == params.article_id)", "params": { "article_id": 1886746 } } }
-func (Es *Client) RemoveArrayItem(index string, docID string, arrayName string, itemName string, itemValue int) (Updated, error) {
+func (Es *Client) RemoveArrayItem(index string, docID string, arrayName string, itemName string, itemValue int) (*ResponseBody, error) {
 	templ := fmt.Sprintf(`
 {
   "script": {
@@ -103,7 +96,7 @@ func (Es *Client) RemoveArrayItem(index string, docID string, arrayName string, 
 }
 `, arrayName, itemName, itemValue)
 
-	var upd Updated
+	var upd *ResponseBody
 	res, err := Es.Client.Update(
 		index,
 		docID,
