@@ -70,6 +70,74 @@ func TestCreateDelete(t *testing.T) {
 	}
 }
 
+func TestCreateUpdateArrayItemAndDelete(t *testing.T) {
+	id := "test-5asdfasdfasdf5"
+	iname := "test"
+	err := Es.Create(iname, id, []byte(`{
+			"mask_articles":[{"article_id":1886671,"position":3},{"article_id":1886746,"position":1}]
+		}`))
+	if err != nil {
+		t.Errorf("ERR: %v", err)
+	}
+	//t.Errorf("created\n")
+	//return
+
+	updMe := 1886746
+	upd, err := Es.UpdateArrayItem(iname, id, "mask_articles", "article_id", updMe, []byte(`
+		{
+        "article_id": 1886746,
+        "position": 5
+      }`))
+	if err != nil {
+		t.Errorf("cannot update id %s: %v", id, err)
+		return
+	}
+
+	if upd.Result != "updated" {
+		t.Errorf("cannot update id %s", id)
+		return
+	}
+
+	got, err := Es.Source("test", id)
+	if err != nil {
+		t.Errorf("cannot read id %s: %v", id, err)
+	}
+
+	type article struct {
+		ArticleID int `json:"article_id"`
+		Position  int `json:"position"`
+	}
+
+	var parsed struct {
+		Aim          string    `json:"aim"`
+		User         string    `json:"user"`
+		Text         string    `json:"text"`
+		MaskArticles []article `json:"mask_articles"`
+	}
+
+	if err := json.Unmarshal(got, &parsed); err != nil {
+		t.Errorf("cannot parse json answer: %v", err)
+	}
+
+	//fmt.Printf("%+v\n", parsed)
+
+	checker := false
+	for _, a := range parsed.MaskArticles {
+		if a.ArticleID == updMe && a.Position == 5 {
+			checker = true
+		}
+	}
+	if !checker {
+		t.Errorf("update failed: %v\n", err)
+	}
+
+	//t.Fatal("good\n")
+
+	if _, err = Es.Delete("test", id); err != nil {
+		t.Errorf("cannot delete id %s: %v", id, err)
+	}
+}
+
 func TestCreateRemoveArrayItemDelete(t *testing.T) {
 	id := "test-3asdfasdfasdf3"
 	iname := "test"
