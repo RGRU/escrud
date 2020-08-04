@@ -28,10 +28,10 @@ type Client struct {
 }
 
 // Connect to a elastic
-func Connect(host string, port int) (*Client, error) {
+func Connect(host string, port int, scheme string) (*Client, error) {
 	var err error
 	//Es, err = elasticsearch.NewDefaultClient()
-	esServer := fmt.Sprintf("http://%s:%d", host, port)
+	esServer := fmt.Sprintf("%s://%s:%d", scheme, host, port)
 	cfg := elasticsearch.Config{Addresses: []string{esServer}}
 	es, err := elasticsearch.NewClient(cfg)
 	if err != nil {

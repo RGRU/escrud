@@ -11,7 +11,7 @@ var Es = Conn()
 
 // Connect to elasticsearch
 func Conn() *Client {
-	es, err := Connect(os.Getenv("ELASTIC"), 9200)
+	es, err := Connect(os.Getenv("ELASTIC"), 9200, "http")
 	if err != nil {
 		fmt.Println("Elasticsearch error:", err)
 	}
