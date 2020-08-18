@@ -88,10 +88,10 @@ func (Es *Client) UpdateArrayItem(index string, docID string, arrayName string, 
 	templ := fmt.Sprintf(`
 {
   "script": {
-    "inline": "ctx._source.%[1]s.removeIf(li -> li.%[2]s == params.id); ctx._source.%[1]s.add(params.cat);",
+    "source": "for (def i = 0; i < ctx._source.%[1]s.length; i++) {if (ctx._source.%[1]s[i].%[2]s == params.id) {ctx._source.%[1]s[i] = params.replace;}} ",
     "params": {
 		"id": %[3]d,
-		"cat": %[4]s
+		"replace": %[4]s
     }
   }
 }
