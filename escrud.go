@@ -81,6 +81,49 @@ func (Es *Client) Read(index, id string) (*ResponseBody, error) {
 	return read(Es.Client, index, id)
 }
 
+// IncrementField пересчитать просмотры в материале
+// аналог запроса
+// POST http://localhost:9200/article/_update/{{id}}/
+// { "script" : "ctx._source.viewed+={{amount}}" }
+func (Es *Client) IncrementField(index string, docID string, fieldName string, incr int) (*ResponseBody, error) {
+	templ := fmt.Sprintf(`
+{
+  "script": {
+    "source": "ctx._source.%s+=params.id",
+	"params": {
+		"id": %d
+	}
+  }
+}
+`, fieldName, incr)
+
+	var upd *ResponseBody
+	res, err := Es.Client.Update(
+		index,
+		docID,
+		bytes.NewReader([]byte(templ)),
+	)
+	if err != nil {
+		return upd, fmt.Errorf("cannot update entry: %v", err)
+	}
+	defer res.Body.Close()
+
+	if res.IsError() {
+		return upd, fmt.Errorf("bad connection? Status: %s, err: %v", res.Status(), err)
+	}
+
+	resp, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		return upd, fmt.Errorf("cannot read response body: %v", err)
+	}
+
+	if err := json.Unmarshal(resp, &upd); err != nil {
+		return upd, fmt.Errorf("response contains bad json: %v", err)
+	}
+
+	return upd, nil
+}
+
 // UpdateArrayItem заменить элемент массива по его параметру (пока только числовой ID)
 // POST http://localhost:9200/mask/_update/_3/
 // { "script": { "inline": "ctx._source.mask_articles.removeIf(li -> li.article_id == params.article_id);", "lang": "painless", "params": { "article_id": 1886746, "cat": { "article_id": 1886746, "position": 5 } } } }
