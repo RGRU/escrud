@@ -1,6 +1,6 @@
 module github.com/RGRU/escrud
 
-go 1.14
+go 1.15
 
 require (
 	github.com/elastic/go-elasticsearch/v8 v8.0.0-20200325130818-3a5eff96ee35
