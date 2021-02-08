@@ -34,7 +34,7 @@ func Connect(host string, port int, scheme string) (*Client, error) {
 	esServer := fmt.Sprintf("%s://%s:%d", scheme, host, port)
 	cfg := elasticsearch.Config{
 		Addresses: []string{esServer},
-		//Transport: &Transport{}, // https://github.com/elastic/go-elasticsearch/blob/master/_examples/fasthttp/fasthttp.go
+		Transport: &Transport{}, // https://github.com/elastic/go-elasticsearch/blob/master/_examples/fasthttp/fasthttp.go
 	}
 	es, err := elasticsearch.NewClient(cfg)
 	if err != nil {
