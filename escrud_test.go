@@ -87,8 +87,79 @@ func TestInsertArrayItemAndDelete(t *testing.T) {
 	insId := 1886429
 	ins, err := Es.InsertArrayItem(iname, id, "mask_articles", []byte(`
 		{
-        "article_id": ` + fmt.Sprintf("%d", insId) + `,
+        "article_id": `+fmt.Sprintf("%d", insId)+`,
         "position": 99
+      }`))
+	if err != nil {
+		t.Errorf("cannot insert id %s: %v", id, err)
+		return
+	}
+	fmt.Printf("%+v\n", ins)
+
+	if ins.Result != "updated" {
+		t.Errorf("cannot insert id %s", id)
+		return
+	}
+
+	got, err := Es.Source("test", id)
+	if err != nil {
+		t.Errorf("cannot read id %s: %v", id, err)
+	}
+
+	type article struct {
+		ArticleID int `json:"article_id"`
+		Position  int `json:"position"`
+	}
+
+	var parsed struct {
+		Aim          string    `json:"aim"`
+		User         string    `json:"user"`
+		Text         string    `json:"text"`
+		MaskArticles []article `json:"mask_articles"`
+	}
+
+	if err := json.Unmarshal(got, &parsed); err != nil {
+		t.Errorf("cannot parse json answer: %v", err)
+	}
+
+	//fmt.Printf("%+v\n", parsed)
+
+	checker := false
+	for _, a := range parsed.MaskArticles {
+		if a.ArticleID == insId && a.Position == 5 {
+			checker = true
+		}
+	}
+	if !checker {
+		t.Errorf("update failed: %v\n", err)
+	}
+
+	//t.Fatal("good\n")
+
+	if _, err = Es.Delete("test", id); err != nil {
+		t.Errorf("cannot delete id %s: %v", id, err)
+	}
+}
+
+func TestInsertNonexistingArrayItemAndDelete(t *testing.T) {
+	id := "bbbbbbbbbbbbbbbbbbbbb"
+	iname := "test"
+
+	err := Es.Create(iname, id, []byte(`{
+		}`))
+	if err != nil {
+		t.Errorf("ERR: %v", err)
+	}
+
+	//time.Sleep(time.Second * 20)
+	//t.Errorf("created\n")
+	//return
+
+	insId := 1886429
+	ins, err := Es.InsertArrayItem(iname, id, "jask_articles", []byte(`
+		{
+        "article_id": `+fmt.Sprintf("3%d", insId)+`,
+        "position": 4
       }`))
 	if err != nil {
 		t.Errorf("cannot insert id %s: %v", id, err)

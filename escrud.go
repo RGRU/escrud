@@ -127,14 +127,14 @@ func (Es *Client) IncrementField(index string, docID string, fieldName string, i
 	return upd, nil
 }
 
-// InsertArrayItem добавить элемент массива
+// InsertArrayItem добавить элемент массива. Массива может не быть - тогда добавить и массив
 // POST http://localhost:9200/mask/_update/_3/
-// { "script": { "inline": "ctx._source.mask_articles.removeIf(li -> li.article_id == params.article_id);", "lang": "painless", "params": { "article_id": 1886746, "cat": { "article_id": 1886746, "position": 5 } } } }
+// "script": "if (!ctx._source.containsKey(\"attending\")) { ctx._source.attending = newField }",
 func (Es *Client) InsertArrayItem(index string, docID string, arrayName string, elem []byte) (*ResponseBody, error) {
 	templ := fmt.Sprintf(`
 {
   "script": {
-    "source": "ctx._source.%[1]s.add(params.new);",
+    "source": "if (!ctx._source.containsKey(\"%[1]s\")) { ctx._source.%[1]s = [params.new] } else { ctx._source.%[1]s.add(params.new) }",
     "params": {
 		"new": %[2]s
     }
