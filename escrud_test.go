@@ -85,10 +85,11 @@ func TestInsertArrayItemAndDelete(t *testing.T) {
 	//return
 
 	insId := 1886429
+	posId := 5
 	ins, err := Es.InsertArrayItem(iname, id, "mask_articles", []byte(`
 		{
         "article_id": `+fmt.Sprintf("%d", insId)+`,
-        "position": 99
+        "position": `+fmt.Sprintf("%d", posId)+`
       }`))
 	if err != nil {
 		t.Errorf("cannot insert id %s: %v", id, err)
@@ -126,7 +127,7 @@ func TestInsertArrayItemAndDelete(t *testing.T) {
 
 	checker := false
 	for _, a := range parsed.MaskArticles {
-		if a.ArticleID == insId && a.Position == 5 {
+		if a.ArticleID == insId && a.Position == posId {
 			checker = true
 		}
 	}
@@ -156,10 +157,11 @@ func TestInsertNonexistingArrayItemAndDelete(t *testing.T) {
 	//return
 
 	insId := 1886429
-	ins, err := Es.InsertArrayItem(iname, id, "jask_articles", []byte(`
+	posId := 18
+	ins, err := Es.InsertArrayItem(iname, id, "mask_articles", []byte(`
 		{
-        "article_id": `+fmt.Sprintf("3%d", insId)+`,
-        "position": 4
+        "article_id": `+fmt.Sprintf("%d", insId)+`,
+        "position": `+fmt.Sprintf("%d", posId)+`
       }`))
 	if err != nil {
 		t.Errorf("cannot insert id %s: %v", id, err)
@@ -197,7 +199,7 @@ func TestInsertNonexistingArrayItemAndDelete(t *testing.T) {
 
 	checker := false
 	for _, a := range parsed.MaskArticles {
-		if a.ArticleID == insId && a.Position == 5 {
+		if a.ArticleID == insId && a.Position == posId {
 			checker = true
 		}
 	}
