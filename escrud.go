@@ -112,7 +112,7 @@ func (Es *Client) IncrementField(index string, docID string, fieldName string, i
 	defer res.Body.Close()
 
 	if res.IsError() {
-		return upd, fmt.Errorf("bad connection? Status: %s, err: %v", res.Status(), err)
+		return upd, fmt.Errorf("increment failed. Status: %s, err: %v", res.Status(), err)
 	}
 
 	resp, err := ioutil.ReadAll(res.Body)
@@ -155,7 +155,7 @@ func (Es *Client) InsertArrayItem(index string, docID string, arrayName string, 
 	defer res.Body.Close()
 
 	if res.IsError() {
-		return upd, fmt.Errorf("bad connection? Status: %s, err: %v", res.Status(), err)
+		return upd, fmt.Errorf("insert failed. Status: %s, err: %v", res.Status(), err)
 	}
 
 	resp, err := ioutil.ReadAll(res.Body)
@@ -199,7 +199,7 @@ func (Es *Client) UpdateArrayItem(index string, docID string, arrayName string, 
 	defer res.Body.Close()
 
 	if res.IsError() {
-		return upd, fmt.Errorf("bad connection? Status: %s, err: %v", res.Status(), err)
+		return upd, fmt.Errorf("update item failed. Status: %s, err: %v", res.Status(), err)
 	}
 
 	resp, err := ioutil.ReadAll(res.Body)
@@ -242,7 +242,7 @@ func (Es *Client) RemoveArrayItem(index string, docID string, arrayName string, 
 	defer res.Body.Close()
 
 	if res.IsError() {
-		return upd, fmt.Errorf("bad connection? Status: %s, err: %v", res.Status(), err)
+		return upd, fmt.Errorf("remove item failed. Status: %s, err: %v", res.Status(), err)
 	}
 
 	resp, err := ioutil.ReadAll(res.Body)
@@ -274,7 +274,7 @@ func update(es *elasticsearch.Client, index, id string, data []byte) (*ResponseB
 	defer res.Body.Close()
 
 	if res.IsError() {
-		return nil, fmt.Errorf("bad connection: status: %s, err: %v", res.Status(), err)
+		return nil, fmt.Errorf("update failed. Status: %s, err: %v", res.Status(), err)
 	}
 
 	resp, err := ioutil.ReadAll(res.Body)
@@ -335,7 +335,7 @@ func create(es *elasticsearch.Client, index string, id string, data []byte) (err
 	}
 
 	if res.IsError() {
-		return fmt.Errorf("bad connection: %s", resp)
+		return fmt.Errorf("create item failed: %s", resp)
 	}
 
 	var rb ResponseBody
@@ -353,7 +353,7 @@ func remove(es *elasticsearch.Client, index, id string) (*ResponseBody, error) {
 	}
 	defer res.Body.Close()
 	if res.IsError() {
-		return nil, fmt.Errorf("bad connection: %v", err)
+		return nil, fmt.Errorf("remove item failed: %v", err)
 	}
 
 	resp, err := ioutil.ReadAll(res.Body)
@@ -377,7 +377,7 @@ func source(es *elasticsearch.Client, index, id string) ([]byte, error) {
 	defer res.Body.Close()
 
 	if res.IsError() {
-		return nil, fmt.Errorf("bad connection: %v", err)
+		return nil, fmt.Errorf("get source failed: %v", err)
 	}
 
 	resp, err := ioutil.ReadAll(res.Body)
@@ -395,7 +395,7 @@ func read(es *elasticsearch.Client, index, id string) (*ResponseBody, error) {
 		return nil, fmt.Errorf("cannot read entry: %v", err)
 	}
 	if res.IsError() {
-		return nil, fmt.Errorf("bad connection: %v", err)
+		return nil, fmt.Errorf("read failed: %v", err)
 	}
 
 	resp, err := ioutil.ReadAll(res.Body)
