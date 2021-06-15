@@ -64,6 +64,46 @@ func (Es *Client) Exists(index string, id string) (bool, error) {
 	return exists(Es.Client, index, id)
 }
 
+// BulkCreate let's bulky index multiple entries by single request to Elastic.
+// look full documentation here: https://www.elastic.co/guide/en/elasticsearch/reference/current/docs-bulk.html#docs-bulk-api-example
+func (Es *Client) BulkCreate(datum []byte) error {
+	if len(datum) < 2 {
+		return fmt.Errorf("empty data")
+	}
+
+	es := Es.Client
+
+	res, err := es.Bulk(
+		bytes.NewReader(datum),
+		//es.Bulk.WithPretty(),
+	)
+	if err != nil {
+		return fmt.Errorf("cannot bulky create entries: %v", err)
+	}
+	defer func() {
+		err := res.Body.Close()
+		if err != nil {
+			log.Printf("cannot close response body: %v", err)
+		}
+	}()
+
+	resp, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		return fmt.Errorf("cannot read response body: %v", err)
+	}
+
+	if res.IsError() {
+		return fmt.Errorf("create item failed: %s", resp)
+	}
+
+	var rb ResponseBody
+	if err := json.Unmarshal(resp, &rb); err != nil {
+		return fmt.Errorf("response contains bad json: %v", err)
+	}
+
+	return nil
+}
+
 // Create record in elasticsearch
 // should contain a valid JSON with key {..."id":your_unique_id}
 func (Es *Client) Create(index string, id string, data []byte) error {

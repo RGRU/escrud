@@ -19,6 +19,43 @@ func Conn() *Client {
 	return es
 }
 
+func TestBatchCreateRead(t *testing.T) {
+	const templ = "asdfasdfasdfsdf-asfasdf_asdfasdfas5"
+	const index = "gtetss"
+	var ids []string
+	var bulkRequest string
+	for i := 0; i < 5; i++ {
+		id := fmt.Sprintf("%s%d", templ, i)
+		ids = append(ids, id)
+		bulkRequest += `{ "index" : { "_index" : "` + index + `", "_id" : "` + id + `" } }
+{ "user": "slivki", "aim": "test read reate", "text": "наверное, как-то изменилась." }
+`
+	}
+
+	err := Es.BulkCreate([]byte(bulkRequest))
+	if err != nil {
+		t.Errorf("ERR: %v", err)
+	}
+
+	for i := range ids {
+		id := fmt.Sprintf("%s%d", templ, i)
+		got, err := Es.Read(index, id)
+		if err != nil {
+			t.Errorf("cannot read id %s: %v", id, err)
+		}
+
+		source := (got.Source).(map[string]interface{})
+		if source["user"] != "slivki" {
+			t.Errorf("should be `slivki`! But : %s", source["user"])
+		}
+
+		if _, err = Es.Delete(index, id); err != nil {
+			t.Errorf("cannot delete id %s: %v", id, err)
+		}
+	}
+
+}
+
 func TestCreateSource(t *testing.T) {
 	err := Es.Create("test", "2", []byte(`{
 			"user": "barsuk",
