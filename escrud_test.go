@@ -28,7 +28,7 @@ func TestBatchCreateRead(t *testing.T) {
 		id := fmt.Sprintf("%s%d", templ, i)
 		ids = append(ids, id)
 		bulkRequest += `{ "index" : { "_index" : "` + index + `", "_id" : "` + id + `" } }
-{ "user": "slivki", "aim": "test read reate", "text": "наверное, как-то изменилась." }
+{"user": "slivki", "aim": "test read reate", "text": "наверное, как-то изменилась." }
 `
 	}
 
@@ -49,11 +49,27 @@ func TestBatchCreateRead(t *testing.T) {
 			t.Errorf("should be `slivki`! But : %s", source["user"])
 		}
 
+		// чтобы проконтролировать визуально, закомменти
 		if _, err = Es.Delete(index, id); err != nil {
 			t.Errorf("cannot delete id %s: %v", id, err)
 		}
 	}
 
+	// Проверим плохие экземпляры
+	ids = []string{}
+	bulkRequest = ""
+	for i := 0; i < 5; i++ {
+		id := fmt.Sprintf("%s%d", templ, i)
+		ids = append(ids, id)
+		bulkRequest += `{ "index" : {"":"nuindex"} }
+{"user": "slivki", "aim": "test read reate", "text": "наверное, как-то изменилась." }
+`
+	}
+
+	err = Es.BulkCreate([]byte(bulkRequest))
+	if err == nil {
+		t.Errorf("ERR should be non zero!\n")
+	}
 }
 
 func TestCreateSource(t *testing.T) {

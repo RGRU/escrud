@@ -12,13 +12,15 @@ import (
 	"github.com/elastic/go-elasticsearch/v7/esapi"
 )
 
-// ResponseBody struct from elastic
+// ResponseBody struct from elastic, common for both success and fail answers
 type ResponseBody struct {
 	Index   string      `json:"_index,omitempty"`
 	ID      string      `json:"_id,omitempty"`
 	Version int         `json:"_version,omitempty"`
 	Source  interface{} `json:"_source,omitempty"`
 	Result  string      `json:"result,omitempty"`
+	Error   interface{} `json:"error,omitempty"`
+	Reason  string      `json:"reason,omitempty"`
 }
 
 // Client elasticsearch
@@ -87,18 +89,13 @@ func (Es *Client) BulkCreate(datum []byte) error {
 		}
 	}()
 
-	resp, err := ioutil.ReadAll(res.Body)
-	if err != nil {
-		return fmt.Errorf("cannot read response body: %v", err)
+	var rb ResponseBody
+	if err := json.NewDecoder(res.Body).Decode(&rb); err != nil {
+		return fmt.Errorf("response contains bad json: %v", err)
 	}
 
 	if res.IsError() {
-		return fmt.Errorf("create item failed: %s", resp)
-	}
-
-	var rb ResponseBody
-	if err := json.Unmarshal(resp, &rb); err != nil {
-		return fmt.Errorf("response contains bad json: %v", err)
+		return fmt.Errorf("bulk create item failed: %v", rb)
 	}
 
 	return nil
